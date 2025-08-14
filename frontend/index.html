@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Netflux - Simple</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    body{margin:0;background:#000;color:#fff;font-family:system-ui,Arial}
+    .wrap{max-width:1100px;margin:0 auto;padding:16px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px}
+    .card{background:#111;border-radius:12px;padding:8px;border:1px solid #222}
+    .thumb{aspect-ratio:16/9;background:#222;border-radius:8px;width:100%;object-fit:cover}
+    .btn{background:#e50914;border:none;color:#fff;padding:8px 10px;border-radius:8px;cursor:pointer}
+    header{padding:16px;font-weight:700;font-size:20px;border-bottom:1px solid #111}
+    video{width:100%;max-height:60vh;border-radius:12px;background:#111;margin-top:16px}
+  </style>
+</head>
+<body>
+  <header class="wrap">Netflux (Simple)</header>
+  <div class="wrap">
+    <h2>Browse</h2>
+    <div id="grid" class="grid"></div>
+    <div id="player"></div>
+  </div>
+
+  <script>
+    async function load() {
+      const res = await fetch('/api/movies');
+      const movies = await res.json();
+      const grid = document.getElementById('grid');
+      grid.innerHTML = movies.map(m => `
+        <div class="card">
+          <img class="thumb" src="${m.thumb}" alt="${m.title}" />
+          <div style="padding:8px 4px 0;">
+            <div style="font-weight:600">${m.title}</div>
+            <div style="opacity:.8;font-size:14px">${m.synopsis}</div>
+          </div>
+          <div style="padding:8px 4px 4px">
+            <button class="btn" onclick="play(${m.id})">Play</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function play(id) {
+      const res = await fetch(`/api/movies/${id}`);
+      const m = await res.json();
+      const player = document.getElementById('player');
+      // if m.video is a local path exposed by backend (/videos/sample.mp4) it will be proxied by nginx -> backend
+      player.innerHTML = `<video controls autoplay src="${m.video}"></video>`;
+      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    }
+
+    load();
+  </script>
+</body>
+</html>
+
