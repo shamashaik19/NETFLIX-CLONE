@@ -1,58 +1,186 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>Netflux - Simple</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Netflix Clone</title>
   <style>
-    body{margin:0;background:#000;color:#fff;font-family:system-ui,Arial}
-    .wrap{max-width:1100px;margin:0 auto;padding:16px}
-    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px}
-    .card{background:#111;border-radius:12px;padding:8px;border:1px solid #222}
-    .thumb{aspect-ratio:16/9;background:#222;border-radius:8px;width:100%;object-fit:cover}
-    .btn{background:#e50914;border:none;color:#fff;padding:8px 10px;border-radius:8px;cursor:pointer}
-    header{padding:16px;font-weight:700;font-size:20px;border-bottom:1px solid #111}
-    video{width:100%;max-height:60vh;border-radius:12px;background:#111;margin-top:16px}
+    /* General Reset */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background-color: #141414;
+      color: #fff;
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 32px;
+      background-color: #111;
+      border-bottom: 1px solid #222;
+      font-size: 24px;
+      font-weight: bold;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+
+    header .logo {
+      color: #e50914;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 20px auto;
+      padding: 0 16px;
+    }
+
+    h2 {
+      margin-bottom: 16px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 16px;
+    }
+
+    .card {
+      background-color: #1c1c1c;
+      border-radius: 10px;
+      overflow: hidden;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card:hover {
+      transform: scale(1.05);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.7);
+    }
+
+    .thumb {
+      width: 100%;
+      aspect-ratio: 16/9;
+      object-fit: cover;
+      border-bottom: 1px solid #222;
+    }
+
+    .card-info {
+      padding: 8px 12px;
+      flex: 1;
+    }
+
+    .card-title {
+      font-weight: 700;
+      margin-bottom: 4px;
+      font-size: 16px;
+    }
+
+    .card-desc {
+      font-size: 13px;
+      opacity: 0.8;
+      height: 40px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .btn {
+      background-color: #e50914;
+      border: none;
+      color: #fff;
+      padding: 6px 12px;
+      margin: 8px 0;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    .btn:hover {
+      background-color: #f6121d;
+    }
+
+    #player {
+      margin-top: 24px;
+      text-align: center;
+    }
+
+    video {
+      width: 100%;
+      max-height: 70vh;
+      border-radius: 10px;
+      background-color: #000;
+    }
+
+    @media(max-width: 768px){
+      .grid {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      }
+    }
   </style>
 </head>
 <body>
-  <header class="wrap">Netflux (Simple)</header>
-  <div class="wrap">
+
+  <header>
+    <div class="logo">Netflix Clone</div>
+    <nav>
+      <!-- Future nav links like login/profile -->
+    </nav>
+  </header>
+
+  <div class="container">
     <h2>Browse</h2>
     <div id="grid" class="grid"></div>
     <div id="player"></div>
   </div>
 
   <script>
+    // Fetch movie list and populate the grid
     async function load() {
-      const res = await fetch('/api/movies');
-      const movies = await res.json();
-      const grid = document.getElementById('grid');
-      grid.innerHTML = movies.map(m => `
-        <div class="card">
-          <img class="thumb" src="${m.thumb}" alt="${m.title}" />
-          <div style="padding:8px 4px 0;">
-            <div style="font-weight:600">${m.title}</div>
-            <div style="opacity:.8;font-size:14px">${m.synopsis}</div>
-          </div>
-          <div style="padding:8px 4px 4px">
+      try {
+        const res = await fetch('/api/movies');
+        const movies = await res.json();
+        const grid = document.getElementById('grid');
+
+        grid.innerHTML = movies.map(m => `
+          <div class="card">
+            <img class="thumb" src="${m.thumb}" alt="${m.title}" />
+            <div class="card-info">
+              <div class="card-title">${m.title}</div>
+              <div class="card-desc">${m.synopsis}</div>
+            </div>
             <button class="btn" onclick="play(${m.id})">Play</button>
           </div>
-        </div>
-      `).join('');
+        `).join('');
+      } catch (err) {
+        console.error('Error loading movies:', err);
+      }
     }
 
+    // Play selected movie
     async function play(id) {
-      const res = await fetch(`/api/movies/${id}`);
-      const m = await res.json();
-      const player = document.getElementById('player');
-      // if m.video is a local path exposed by backend (/videos/sample.mp4) it will be proxied by nginx -> backend
-      player.innerHTML = `<video controls autoplay src="${m.video}"></video>`;
-      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+      try {
+        const res = await fetch(`/api/movies/${id}`);
+        const m = await res.json();
+        const player = document.getElementById('player');
+        player.innerHTML = `<video controls autoplay src="${m.video}"></video>`;
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+      } catch (err) {
+        console.error('Error playing movie:', err);
+      }
     }
 
     load();
   </script>
+
 </body>
 </html>
-
